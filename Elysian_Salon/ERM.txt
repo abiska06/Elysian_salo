@@ -1,0 +1,43 @@
+Elysian Salon — Entity Relationship Model (ERM)
+
+Overview
+- Users (admin, staff, customer) authenticate and own profiles
+- Customers and Staff reference Users via user_id
+- Services catalog is referenced by Appointments
+- Appointments link Customers, Staff, and Services
+- Payments link to completed Appointments
+- Vouchers/Discount Vouchers apply discounts to Appointments
+
+Tables & Keys
+- users
+  - user_id (PK), username, password, role, created_at, locked_until, failed_attempts, password_changed_at
+- customers
+  - customer_id (PK), user_id (FK → users.user_id), name, email, phone
+- staff
+  - staff_id (PK), user_id (FK → users.user_id), name, position
+- services
+  - service_id (PK), service_name, description, price, duration
+- appointments
+  - appointment_id (PK), customer_id (FK → customers.customer_id), staff_id (FK → staff.staff_id), service_id (FK → services.service_id), appointment_date, status, final_price, voucher_code, created_at
+- payments
+  - payment_id (PK), appointment_id (FK → appointments.appointment_id), amount, method, status, payment_date, receipt_no, created_at
+- vouchers (or discount_vouchers fallback)
+  - id (PK), code (UNIQUE), discount_type (percent|fixed), discount_value, expiry_date, is_active, created_at
+- otp_codes (supporting table)
+  - id (PK), user_id, code, expires_at, consumed, created_at
+- login_attempts (supporting table)
+  - id (PK), user_id, username, success, ip, created_at
+
+Relationships
+- users 1—1 customers: customers.user_id → users.user_id
+- users 1—1 staff: staff.user_id → users.user_id
+- services 1—N appointments: appointments.service_id → services.service_id
+- customers 1—N appointments: appointments.customer_id → customers.customer_id
+- staff 1—N appointments: appointments.staff_id → staff.staff_id
+- appointments 1—1 payments: payments.appointment_id → appointments.appointment_id
+- vouchers 1—N appointments (by voucher_code where applicable)
+
+Notes
+- Database name: 25123780
+- Passwords stored via password_hash; login verified via password_verify
+- Payments auto-create on status=completed with receipt_no RCPT-YYYYMMDD-#### and method cash
